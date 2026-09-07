@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="https://www.thymeleaf.org"
+  th:replace="~{layout :: html(head = ~{::head}, content = ~{::content})}"
+>
+  <th:block th:fragment="head">
+    <title th:text="|${post.spec.title} - ${site.title}|">文章标题 - 站点标题</title>
+    <th:block th:if="${theme.config.seo?.enable_metadata}">
+      <link rel="canonical" th:href="@{${site.url + post.status.permalink}}" />
+      <meta property="og:type" content="article" />
+      <meta property="og:title" th:content="${post.spec.title}" />
+      <meta property="og:url" th:content="${site.url + post.status.permalink}" />
+      <meta property="og:description" th:content="${post.status.excerpt}" />
+      <meta
+        th:if="${not #strings.isEmpty(post.spec.cover)}"
+        property="og:image"
+        th:content="${post.spec.cover}"
+      />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" th:content="${post.spec.title}" />
+      <meta name="twitter:description" th:content="${post.status.excerpt}" />
+      <meta
+        th:if="${not #strings.isEmpty(post.spec.cover)}"
+        name="twitter:image"
+        th:content="${post.spec.cover}"
+      />
+    </th:block>
+    <th:block th:if="${theme.config.seo?.enable_structured_data}">
+      <script type="application/ld+json" th:inline="javascript">
+        {
+          "@context": "https://schema.org",
+          "@type": "BlogPosting",
+          "headline": /*[[${post.spec.title}]]*/ "",
+          "url": /*[[${site.url + post.status.permalink}]]*/ "",
+          "datePublished": /*[[${post.spec.publishTime}]]*/ "",
+          "dateModified": /*[[${post.status.lastModifyTime ?: post.spec.publishTime}]]*/ "",
+          "author": {
+            "@type": "Person",
+            "name": /*[[${post.owner?.displayName ?: post.spec.owner}]]*/ ""
+          }
+        }
+      </script>
+    </th:block>
+  </th:block>
+
+  <th:block th:fragment="content">
+    <div class="home-layout">
+      <div class="main-col">
+        <article class="post-detail glass-card" th:object="${post}">
+        <header class="post-header">
+          <div class="post-card-meta">
+            <span class="pin-badge" th:if="*{spec.pinned}" th:text="#{post.pinned}">置顶</span>
+            <a
+              class="meta-pill meta-category"
+              th:each="category : *{categories}"
+              th:href="@{${category.status.permalink}}"
+              th:text="${category.spec.displayName}"
+              >分类</a
+            >
+            <a
+              class="meta-pill meta-tag"
+              th:each="tag : *{tags}"
+              th:href="@{${tag.status.permalink}}"
+              th:text="${tag.spec.displayName}"
+              >标签</a
+            >
+          </div>
+          <h1 class="post-title" th:text="*{spec.title}">文章标题</h1>
+          <div class="post-meta">
+            <a class="post-card-author" th:href="@{|/authors/*{spec.owner}|}">
+              <span
+                class="avatar avatar-sm"
+                th:classappend="${#strings.isEmpty(post.owner?.avatar)} ? 'avatar-text' : ''"
+              >
+                <img
+                  th:if="${not #strings.isEmpty(post.owner?.avatar)}"
+                  th:src="${post.owner.avatar}"
+                  th:alt="${post.owner.displayName}"
+                  loading="lazy"
+                />
+                <span
+                  th:if="${#strings.isEmpty(post.owner?.avatar)}"
+                  th:text="${#strings.substring(post.owner?.displayName ?: post.spec.owner, 0, 1)}"
+                  >作</span
+                >
+              </span>
+              <span class="author-name" th:text="*{owner?.displayName ?: spec.owner}">作者</span>
+            </a>
+            <span class="dot">·</span>
+            <time th:datetime="*{spec.publishTime}" th:text="*{#temporals.format(spec.publishTime, 'yyyy-MM-dd')}"
+              >2026-01-01</time
+            >
+            <span class="dot">·</span>
+            <span class="post-views" th:title="#{card.views}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              <span th:text="*{stats?.visit ?: 0}">0</span>
+            </span>
+          </div>
+        </header>
+
+        <img
+          class="post-cover"
+          th:if="*{not #strings.isEmpty(spec.cover)}"
+          th:src="*{spec.cover}"
+          th:srcset="|${thumbnail.gen(post.spec.cover, 'm')} 800w, ${thumbnail.gen(post.spec.cover, 'l')} 1200w|"
+          sizes="(max-width: 860px) 100vw, 860px"
+          th:alt="*{spec.title}"
+        />
+
+        <div class="post-content" th:utext="*{content.content}">文章正文</div>
+
+        <footer class="post-footer">
+          <div class="post-footer-actions">
+            <button
+              type="button"
+              class="btn btn-primary ln-like"
+              th:attr="data-group='content.halo.run', data-plural='posts', data-name=*{metadata.name}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+              </svg>
+              <span th:text="#{card.like}">点赞</span>
+              <span class="ln-like-count" th:text="*{stats?.upvote ?: 0}">0</span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-ghost ln-share"
+              th:attr="data-share-url=@{${post.status.permalink}}"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="18" cy="5" r="3" />
+                <circle cx="6" cy="12" r="3" />
+                <circle cx="18" cy="19" r="3" />
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+              </svg>
+              <span th:text="#{card.share}">分享</span>
+            </button>
+          </div>
+        </footer>
+      </article>
+
+      <!-- 上一篇 / 下一篇 -->
+      <th:block
+        th:with="postCursor = ${postFinder.cursor(post.metadata.name)}"
+        th:if="${postCursor != null and (postCursor.hasPrevious() or postCursor.hasNext())}"
+      >
+        <nav class="post-cursor" aria-label="相邻文章">
+          <a
+            class="cursor-card glass-card"
+            th:if="${postCursor.hasPrevious()}"
+            th:href="@{${postCursor.previous.status.permalink}}"
+          >
+            <span class="cursor-label" th:text="#{post.prevPost}">上一篇</span>
+            <span class="cursor-title" th:text="${postCursor.previous.spec.title}">上一篇文章</span>
+          </a>
+          <span class="cursor-spacer"></span>
+          <a
+            class="cursor-card cursor-card-next glass-card"
+            th:if="${postCursor.hasNext()}"
+            th:href="@{${postCursor.next.status.permalink}}"
+          >
+            <span class="cursor-label" th:text="#{post.nextPost}">下一篇</span>
+            <span class="cursor-title" th:text="${postCursor.next.spec.title}">下一篇文章</span>
+          </a>
+        </nav>
+      </th:block>
+
+      <!-- 评论区 -->
+      <div class="comment-section glass-card" th:if="${haloCommentEnabled and post.spec.allowComment}">
+        <halo:comment
+          group="content.halo.run"
+          kind="Post"
+          th:attr="name=${post.metadata.name}"
+        />
+      </div>
+      </div>
+
+      <!-- 文章页右栏：欢迎卡片 + 目录导航 + 站点信息（页脚小组件内容） -->
+      <aside class="sidebar post-aside">
+        <th:block th:replace="~{modules/widgets :: widget-welcome}"></th:block>
+        <th:block th:replace="~{modules/widgets :: widget-toc}"></th:block>
+        <th:block th:replace="~{modules/widgets :: widget-footer}"></th:block>
+      </aside>
+    </div>
+  </th:block>
+</html>

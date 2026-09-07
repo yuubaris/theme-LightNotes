@@ -1,0 +1,72 @@
+<article class="post-card glass-card" th:fragment="card(post)">
+  <a
+    class="post-card-cover"
+    th:if="${not #strings.isEmpty(post.spec.cover)}"
+    th:href="@{${post.status.permalink}}"
+    th:aria-label="${post.spec.title}"
+  >
+    <img
+      th:src="${post.spec.cover}"
+      th:srcset="|${thumbnail.gen(post.spec.cover, 's')} 400w, ${thumbnail.gen(post.spec.cover, 'm')} 800w|"
+      sizes="(max-width: 768px) 100vw, 720px"
+      th:alt="${post.spec.title}"
+      loading="lazy"
+    />
+  </a>
+  <div class="post-card-body">
+    <div class="post-card-meta">
+      <span class="pin-badge" th:if="${post.spec.pinned}" th:text="#{post.pinned}">置顶</span>
+      <a
+        class="meta-pill meta-category"
+        th:each="category : ${post.categories}"
+        th:href="@{${category.status.permalink}}"
+        th:text="${category.spec.displayName}"
+        >分类</a
+      >
+      <a
+        class="meta-pill meta-tag"
+        th:each="tag : ${post.tags}"
+        th:href="@{${tag.status.permalink}}"
+        th:text="${tag.spec.displayName}"
+        >标签</a
+      >
+    </div>
+    <h2 class="post-card-title">
+      <a th:href="@{${post.status.permalink}}" th:text="${post.spec.title}">文章标题</a>
+    </h2>
+    <p class="post-card-excerpt" th:text="${post.status.excerpt}">文章摘要</p>
+    <div class="post-card-footer">
+      <div class="post-card-author">
+        <span
+          class="avatar avatar-sm"
+          th:classappend="${#strings.isEmpty(post.owner?.avatar)} ? 'avatar-text' : ''"
+        >
+          <img th:if="${not #strings.isEmpty(post.owner?.avatar)}" th:src="${post.owner.avatar}" th:alt="${post.owner.displayName}" loading="lazy" />
+          <span th:if="${#strings.isEmpty(post.owner?.avatar)}" th:text="${#strings.substring(post.owner?.displayName ?: post.spec.owner, 0, 1)}">作</span>
+        </span>
+        <span class="author-name" th:text="${post.owner?.displayName ?: post.spec.owner}">作者</span>
+        <span class="dot">·</span>
+        <time
+          th:datetime="${post.spec.publishTime}"
+          th:text="${#temporals.format(post.spec.publishTime, 'yyyy-MM-dd')}"
+          >2026-01-01</time
+        >
+      </div>
+      <div class="post-card-stats">
+        <span class="stat" th:title="#{card.views}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+          <span th:text="${post.stats?.visit ?: 0}">0</span>
+        </span>
+        <span class="stat" th:title="#{card.comments}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+          </svg>
+          <span th:text="${post.status?.commentsCount ?: 0}">0</span>
+        </span>
+      </div>
+    </div>
+  </div>
+</article>

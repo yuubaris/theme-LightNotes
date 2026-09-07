@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="https://www.thymeleaf.org"
+  th:replace="~{layout :: html(head = ~{::head}, content = ~{::content})}"
+>
+  <th:block th:fragment="head">
+    <title
+      th:text="${not #strings.isEmpty(linksTitle) ? linksTitle + ' - ' + site.title : '友情链接 - ' + site.title}"
+      >友情链接 - 站点标题</title
+    >
+  </th:block>
+
+  <th:block th:fragment="content">
+    <div class="home-layout">
+      <div class="main-col">
+        <!-- 未安装 / 未启用友链插件时的提示 -->
+        <section class="page-title-bar glass-card" th:if="${groups == null}">
+          <h1 class="page-title" th:text="|#{links.title} - ${site.title}|">友情链接</h1>
+          <p class="page-subtitle" th:text="#{links.notInstalled}">
+            尚未安装或启用「链接管理（plugin-links）」插件，安装后此页面会自动展示友链。
+          </p>
+        </section>
+
+        <div class="pages-col" th:if="${groups != null}">
+          <div class="page-title-bar glass-card">
+            <h1 class="page-title" th:text="${not #strings.isEmpty(linksTitle) ? linksTitle : (site.title + '的友链')}">友情链接</h1>
+            <p class="page-subtitle" th:text="#{links.slogan}">山海有相逢，皆是同路人</p>
+          </div>
+
+          <!-- 分组筛选 -->
+          <div class="moment-filter glass-card" th:if="${simpleGroups != null and not #lists.isEmpty(simpleGroups)}">
+            <a class="filter-pill" th:classappend="${#strings.isEmpty(group)} ? 'active'" th:href="@{/links}">
+              <span th:text="#{links.all}">全部</span>
+            </a>
+            <a
+              class="filter-pill"
+              th:each="item : ${simpleGroups}"
+              th:classappend="${group == item.metadata.name} ? 'active'"
+              th:href="@{/links(group=${item.metadata.name})}"
+            >
+              <span th:text="${item.spec.displayName}">分组名</span>
+            </a>
+          </div>
+
+          <!-- 链接分组 -->
+          <div class="links-groups" th:if="${groups != null and not #lists.isEmpty(groups)}">
+            <section class="links-group" th:each="g : ${groups}">
+              <h2 class="links-group-title">
+                <span class="links-group-badge" th:text="${#strings.defaultString(g.spec.displayName, #messages.msgOrNull('links.ungrouped'))}"></span>
+                <span class="archive-year-line"></span>
+              </h2>
+              <div class="links-grid" th:if="${g.links != null and not #lists.isEmpty(g.links)}">
+                <a
+                  class="link-card glass-card"
+                  th:each="link : ${g.links}"
+                  th:href="${link.spec.url}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <span class="link-logo">
+                    <img
+                      th:if="${not #strings.isEmpty(link.spec.logo)}"
+                      th:src="${link.spec.logo}"
+                      th:alt="${link.spec.displayName}"
+                      loading="lazy"
+                    />
+                    <span
+                      class="link-logo-text"
+                      th:if="${#strings.isEmpty(link.spec.logo)}"
+                      th:text="${#strings.substring(link.spec.displayName, 0, 1)}"
+                      >友</span
+                    >
+                  </span>
+                  <span class="link-info">
+                    <span class="link-name" th:text="${link.spec.displayName}">链接名称</span>
+                    <span
+                      class="link-desc"
+                      th:if="${not #strings.isEmpty(link.spec.description)}"
+                      th:text="${link.spec.description}"
+                      >链接描述</span
+                    >
+                  </span>
+                </a>
+              </div>
+            </section>
+          </div>
+          <div class="empty-state glass-card" th:unless="${groups != null and not #lists.isEmpty(groups)}">
+            <p th:text="#{empty.links}">暂无友情链接</p>
+          </div>
+
+          <!-- 友链申请 -->
+          <div class="links-apply" th:if="${linkApplicationEnabled}">
+            <div class="apply-toggle-box glass-card">
+              <button class="btn btn-primary btn-sm apply-toggle" type="button" data-ln-apply-toggle>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                </svg>
+                <span th:text="#{links.apply}">申请友链</span>
+              </button>
+            </div>
+            <div class="apply-panel glass-card" data-ln-apply-panel hidden>
+              <p
+                class="apply-msg apply-msg--success"
+                th:if="${param.applied != null and param.applied[0] == 'success'}"
+                th:text="#{links.applied}"
+              >申请已提交，等待审核，请保持联系方式畅通。</p>
+              <p
+                class="apply-msg apply-msg--error"
+                th:if="${param.applied != null and (param.applied[0] == 'error' or param.applied[0] == 'disabled')}"
+                th:text="${param.message != null ? param.message[0] : #messages.msgOrNull('links.applyFailed')}"
+              >提交失败，请稍后再试</p>
+              <form class="apply-form" method="post" th:action="@{/links/apply/submit}">
+                <input type="hidden" name="_csrf" th:value="${csrfToken}" />
+                <label class="apply-field">
+                  <span th:text="#{links.form.name}">网站名称</span>
+                  <input type="text" name="displayName" required maxlength="50" th:placeholder="#{links.form.namePh}"/>
+                </label>
+                <label class="apply-field">
+                  <span th:text="#{links.form.url}">网站地址</span>
+                  <input type="url" name="url" required placeholder="https://example.com" />
+                </label>
+                <label class="apply-field">
+                  <span th:text="#{links.form.logo}">Logo 地址</span>
+                  <input type="url" name="logo" th:placeholder="#{links.form.logoPh}" />
+                </label>
+                <label class="apply-field">
+                  <span th:text="#{links.form.desc}">一句话介绍</span>
+                  <input type="text" name="description" maxlength="120" th:placeholder="#{links.form.descPh}"/>
+                </label>
+                <label class="apply-field">
+                  <span th:text="#{links.form.email}">联系邮箱</span>
+                  <input type="email" name="email" th:placeholder="#{links.form.emailPh}"/>
+                </label>
+                <label class="apply-field">
+                  <span th:text="#{links.form.captcha}">验证码</span>
+                  <span class="apply-captcha">
+                    <input type="text" name="captchaCode" required maxlength="5" th:placeholder="#{links.form.captchaPh}" autocomplete="off" />
+                    <img class="apply-captcha-img" th:src="@{/links/apply/captcha}" th:alt="#{links.form.captcha}"
+                      onclick="this.src='/links/apply/captcha?t=' + Date.now()" loading="lazy" />
+                  </span>
+                </label>
+                <button class="btn btn-primary" type="submit" th:text="#{links.form.submit}">提交申请</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div th:replace="~{modules/sidebar :: sidebar}"></div>
+    </div>
+  </th:block>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="https://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+  th:lang="${#locale.toLanguageTag}"
+  th:classappend="${'color-scheme-' + (theme.config.global?.color_scheme ?: 'auto')}"
+  th:attr="data-color-scheme=${theme.config.global?.color_scheme ?: 'auto'}"
+  th:fragment="html (head, content)"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:if="${head == null}" th:text="${site.title}">站点标题</title>
+    <th:block th:if="${head != null}">
+      <th:block th:replace="${head}" />
+    </th:block>
+    <link
+      rel="stylesheet"
+      th:href="@{/assets/css/style.css?v={version}(version=${theme.spec.version})}"
+    />
+    <script th:inline="javascript">
+      // 防止明暗模式切换时的闪屏，在渲染前应用配色
+      (function () {
+        var setting = /*[[${theme.config.global?.color_scheme ?: 'auto'}]]*/ "auto";
+        var saved = null;
+        try {
+          saved = localStorage.getItem("ln-color-scheme");
+        } catch (e) {
+          /* ignore */
+        }
+        var mode = saved || setting;
+        var dark =
+          mode === "dark" ||
+          (mode !== "light" &&
+            window.matchMedia &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches);
+        var root = document.documentElement;
+        root.classList.toggle("dark", dark);
+        root.classList.toggle("color-scheme-dark", dark);
+        root.classList.toggle("color-scheme-light", !dark);
+        root.setAttribute("data-color-scheme", dark ? "dark" : "light");
+      })();
+    </script>
+  </head>
+  <body th:attr="data-template=${_templateId}">
+    <!-- 背景插画层（JS 读取 data 属性后应用；未配置背景时透出默认渐变底色） -->
+    <div
+      class="bg-layer"
+      id="ln-bg"
+      aria-hidden="true"
+      th:attr="data-blur=${theme.config.global?.background_blur ?: 8}, data-bg=${theme.config.global?.background}"
+    ></div>
+    <!-- 漂浮装饰：云朵与爱心（可在主题设置中关闭） -->
+    <div
+      class="bg-decor"
+      aria-hidden="true"
+      th:if="${theme.config.effects?.decor_enabled ?: true}"
+    >
+      <svg class="decor-cloud decor-cloud-1" viewBox="0 0 120 48" fill="currentColor">
+        <path
+          d="M28 44a14 14 0 0 1-2.6-27.7A20 20 0 0 1 64 10.5 16 16 0 0 1 88 22a13 13 0 0 1-4 25.5z"
+        />
+      </svg>
+      <svg class="decor-cloud decor-cloud-2" viewBox="0 0 120 48" fill="currentColor">
+        <path
+          d="M28 44a14 14 0 0 1-2.6-27.7A20 20 0 0 1 64 10.5 16 16 0 0 1 88 22a13 13 0 0 1-4 25.5z"
+        />
+      </svg>
+      <svg class="decor-heart decor-heart-1" viewBox="0 0 24 24" fill="currentColor">
+        <path
+          d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+        />
+      </svg>
+      <svg class="decor-heart decor-heart-2" viewBox="0 0 24 24" fill="currentColor">
+        <path
+          d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+        />
+      </svg>
+      <svg class="decor-heart decor-heart-3" viewBox="0 0 24 24" fill="currentColor">
+        <path
+          d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+        />
+      </svg>
+    </div>
+
+    <header th:replace="~{modules/header :: header}"></header>
+
+    <main class="site-main">
+      <div class="container">
+        <th:block th:replace="${content}" />
+      </div>
+    </main>
+
+    <button type="button" class="back-to-top" id="ln-top" aria-label="回到顶部">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="19" x2="12" y2="5" />
+        <polyline points="5 12 12 5 19 12" />
+      </svg>
+    </button>
+    <div class="ln-toast" id="ln-toast" aria-live="polite"></div>
+
+    <script
+      defer
+      th:src="@{/assets/js/main.js?v={version}(version=${theme.spec.version})}"
+    ></script>
+
+    <!-- 飘花/飘雪特效（可开关，类型注入给 effects.js） -->
+    <th:block th:if="${theme.config.effects?.effects_enabled}">
+      <script th:inline="javascript">
+        window.lnEffects = {
+          type: /*[[${theme.config.effects?.effects_type ?: 'auto'}]]*/ "auto"
+        };
+      </script>
+      <script
+        defer
+        th:src="@{/assets/js/effects.js?v={version}(version=${theme.spec.version})}"
+      ></script>
+    </th:block>
+
+    <!-- 页面功能：外链提示 / 标签页标题切换（可在主题设置中开关） -->
+    <script th:inline="javascript">
+      window.lnPage = {
+        externalLinkPrompt: /*[[${theme.config.page_features?.external_link_prompt ?: true}]]*/ true,
+        externalLinkImage: /*[[${theme.config.page_features?.external_link_image ?: '/upload/safepage.png'}]]*/ "/upload/safepage.png",
+        tabTitleSwitch: /*[[${theme.config.page_features?.tab_title_switch ?: true}]]*/ true,
+        tabTitleLeave: /*[[${theme.config.page_features?.tab_title_leave ?: 'あの日に見た夢の続きはまだまだ見たい。'}]]*/ "",
+        tabTitleLeaveDelay: /*[[${theme.config.page_features?.tab_title_leave_delay ?: 50}]]*/ 50,
+        tabTitleReturn: /*[[${theme.config.page_features?.tab_title_return ?: '何処までも行けるさ、君となら。'}]]*/ "",
+        tabTitleReturnDelay: /*[[${theme.config.page_features?.tab_title_return_delay ?: 0}]]*/ 0,
+        tabTitleRestoreDelay: /*[[${theme.config.page_features?.tab_title_restore_delay ?: 3000}]]*/ 3000
+      };
+    </script>
+
+    <halo:footer />
+  </body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="https://www.thymeleaf.org"
+  th:replace="~{layout :: html(head = ~{::head}, content = ~{::content})}"
+>
+  <th:block th:fragment="head">
+    <title th:text="|${author.spec.displayName} - ${site.title}|">作者名 - 站点标题</title>
+  </th:block>
+
+  <th:block th:fragment="content">
+    <div class="home-layout">
+      <div class="main-col">
+        <div class="page-title-bar author-bar glass-card">
+          <span
+            class="avatar avatar-lg"
+            th:classappend="${#strings.isEmpty(author.spec.avatar)} ? 'avatar-text' : ''"
+          >
+            <img
+              th:if="${not #strings.isEmpty(author.spec.avatar)}"
+              th:src="${author.spec.avatar}"
+              th:alt="${author.spec.displayName}"
+            />
+            <span
+              th:if="${#strings.isEmpty(author.spec.avatar)}"
+              th:text="${#strings.substring(author.spec.displayName, 0, 1)}"
+              >作</span
+            >
+          </span>
+          <div class="author-bar-info">
+            <h1 class="page-title" th:text="${author.spec.displayName}">作者名</h1>
+            <p class="page-subtitle" th:if="${not #strings.isEmpty(author.spec.bio)}" th:text="${author.spec.bio}">
+              作者简介
+            </p>
+          </div>
+        </div>
+
+        <div class="card-list" th:if="${not #lists.isEmpty(posts.items)}">
+          <th:block th:each="post : ${posts.items}">
+            <article th:replace="~{modules/post-card :: card(post=${post})}"></article>
+          </th:block>
+        </div>
+        <div class="empty-state glass-card" th:unless="${not #lists.isEmpty(posts.items)}">
+          <p th:text="#{empty.posts}">还没有文章哦～</p>
+        </div>
+
+        <nav th:replace="~{modules/pagination :: pagination(pageResult=${posts})}"></nav>
+      </div>
+
+      <div th:replace="~{modules/sidebar :: sidebar}"></div>
+    </div>
+  </th:block>
+</html>

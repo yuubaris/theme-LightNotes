@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="https://www.thymeleaf.org"
+  th:replace="~{layout :: html(head = ~{::head}, content = ~{::content})}"
+>
+  <th:block th:fragment="head">
+    <title th:text="|${category.spec.displayName} - ${site.title}|">分类名 - 站点标题</title>
+  </th:block>
+
+  <th:block th:fragment="content">
+    <div class="home-layout">
+      <div class="main-col">
+        <div class="page-title-bar glass-card">
+          <h1 class="page-title" th:text="${category.spec.displayName}">分类名</h1>
+          <p
+            class="page-subtitle"
+            th:if="${not #strings.isEmpty(category.spec.description)}"
+            th:text="${category.spec.description}"
+          >
+            分类描述
+          </p>
+        </div>
+
+        <div class="card-list" th:if="${not #lists.isEmpty(posts.items)}">
+          <th:block th:each="post : ${posts.items}">
+            <article th:replace="~{modules/post-card :: card(post=${post})}"></article>
+          </th:block>
+        </div>
+        <div class="empty-state glass-card" th:unless="${not #lists.isEmpty(posts.items)}">
+          <p th:text="#{empty.posts}">还没有文章哦～</p>
+        </div>
+
+        <nav th:replace="~{modules/pagination :: pagination(pageResult=${posts})}"></nav>
+      </div>
+
+      <div th:replace="~{modules/sidebar :: sidebar}"></div>
+    </div>
+  </th:block>
+</html>

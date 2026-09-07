@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="https://www.thymeleaf.org"
+  th:replace="~{layout :: html(head = ~{::head}, content = ~{::content})}"
+>
+  <th:block th:fragment="head">
+    <title th:text="|#{page.archives} - ${site.title}|">归档 - 站点标题</title>
+  </th:block>
+
+  <th:block th:fragment="content">
+    <div class="home-layout">
+      <div class="main-col">
+        <div class="page-title-bar glass-card">
+          <h1 class="page-title" th:text="#{page.archives}">归档</h1>
+        </div>
+
+        <div class="archive-list" th:if="${not #lists.isEmpty(archives.items)}">
+          <th:block th:each="archive : ${archives.items}">
+            <section class="archive-year glass-card">
+              <h2 class="archive-year-title">
+                <span class="archive-year-badge" th:text="${archive.year}">2026</span>
+                <span class="archive-year-line"></span>
+              </h2>
+              <ul class="archive-month-list">
+                <th:block th:each="month : ${archive.months}">
+                  <li class="archive-item" th:each="post : ${month.posts}">
+                    <time
+                      class="archive-item-time"
+                      th:datetime="${post.spec.publishTime}"
+                      th:text="${#temporals.format(post.spec.publishTime, 'MM-dd')}"
+                      >01-01</time
+                    >
+                    <a
+                      class="archive-item-title"
+                      th:href="@{${post.status.permalink}}"
+                      th:text="${post.spec.title}"
+                      >文章标题</a
+                    >
+                  </li>
+                </th:block>
+              </ul>
+            </section>
+          </th:block>
+        </div>
+        <div class="empty-state glass-card" th:unless="${not #lists.isEmpty(archives.items)}">
+          <p th:text="#{empty.posts}">还没有文章哦～</p>
+        </div>
+
+        <nav th:replace="~{modules/pagination :: pagination(pageResult=${archives})}"></nav>
+      </div>
+
+      <div th:replace="~{modules/sidebar :: sidebar}"></div>
+    </div>
+  </th:block>
+</html>

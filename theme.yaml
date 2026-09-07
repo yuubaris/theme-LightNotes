@@ -1,0 +1,21 @@
+apiVersion: theme.halo.run/v1alpha1
+kind: Theme
+metadata:
+  name: theme-lightnotes
+spec:
+  displayName: 莱洛丝
+  author:
+    name: LightNotes
+    website: https://www.halo.run
+  description: 莱洛丝（LightNotes）—— 二次元轻量液态玻璃拟态博客主题，蓝白治愈系配色，两栏社区布局，原生适配瞬间（说说）插件。
+  logo: /themes/theme-lightnotes/assets/images/logo.webp
+  homepage: https://github.com/yuubaris/theme-LightNotes
+  repo: https://github.com/yuubaris/theme-LightNotes.git
+  issues: https://github.com/yuubaris/theme-LightNotes/issues
+  settingName: "theme-lightnotes-setting"
+  configMapName: "theme-lightnotes-configMap"
+  version: 1.0.0
+  requires: ">=2.20.0"
+  license:
+    - name: "GPL-3.0"
+      url: "https://www.gnu.org/licenses/gpl-3.0.html"

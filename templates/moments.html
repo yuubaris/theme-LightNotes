@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="https://www.thymeleaf.org"
+  th:replace="~{layout :: html(head = ~{::head}, content = ~{::content})}"
+>
+  <th:block th:fragment="head">
+    <title th:text="|#{moments.title} - ${site.title}|">说说 - 站点标题</title>
+  </th:block>
+
+  <th:block th:fragment="content">
+    <div class="home-layout">
+      <div class="main-col">
+        <div class="page-title-bar glass-card">
+          <h1 class="page-title" th:text="#{moments.title}">说说</h1>
+          <p class="page-subtitle" th:text="${theme.config.global?.slogan ?: '记录每一个闪闪发光的日子'}">
+            记录每一个闪闪发光的日子
+          </p>
+        </div>
+
+        <!-- 说说标签筛选 -->
+        <div class="moment-filter glass-card" th:if="${not #lists.isEmpty(tags)}">
+          <a class="filter-pill" th:href="@{/moments}" th:classappend="${#lists.isEmpty(param.tag)} ? 'active'">
+            <span th:text="#{moments.all}">全部</span>
+          </a>
+          <a
+            class="filter-pill"
+            th:each="tag : ${tags}"
+            th:href="|/moments?tag=${tag.name}|"
+            th:classappend="${#lists.contains(param.tag, tag.name)} ? 'active'"
+          >
+            <span th:text="|# ${tag.name}|"># 标签</span>
+            <span class="filter-count" th:text="${tag.momentCount}">0</span>
+          </a>
+        </div>
+
+        <div class="card-list" th:if="${not #lists.isEmpty(moments.items)}">
+          <th:block th:each="moment : ${moments.items}">
+            <article th:replace="~{modules/moment-card :: card(moment=${moment})}"></article>
+          </th:block>
+        </div>
+        <div class="empty-state glass-card" th:unless="${not #lists.isEmpty(moments.items)}">
+          <p th:text="#{empty.moments}">还没有说说哦～</p>
+        </div>
+
+        <nav th:replace="~{modules/pagination :: pagination(pageResult=${moments})}"></nav>
+      </div>
+
+      <div th:replace="~{modules/sidebar :: sidebar}"></div>
+    </div>
+  </th:block>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="https://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+</head>
+<body>
+<!-- 页脚小组件内容：由侧边栏「小组件与显示顺序」控制显示与位置，
+     各项内容在「主题设置 → 页脚」中维护 -->
+<th:block th:fragment="footer">
+  <div class="footer-decor" aria-hidden="true">♡</div>
+
+  <!-- 第一行：站名 | 站点标语 -->
+  <div class="footer-brand-row">
+    <a class="footer-site" th:href="@{/}" th:text="${site.title}">LightNotes</a>
+    <th:block
+      th:if="${not #strings.isEmpty(theme.config.global?.slogan ?: '记录每一个闪闪发光的日子')}"
+    >
+      <span class="footer-row-sep" aria-hidden="true">|</span>
+      <p
+        class="footer-slogan"
+        th:text="${theme.config.global?.slogan ?: '记录每一个闪闪发光的日子'}"
+      >
+        记录每一个闪闪发光的日子
+      </p>
+    </th:block>
+  </div>
+
+  <!-- 第二行：版权信息 | 运行时长 -->
+  <div class="footer-meta-row">
+    <p class="footer-meta">
+      <span th:text="|© ${#temporals.format(#temporals.createNow(), 'yyyy')} ${site.title}|"
+        >© 2026 LightNotes</span
+      >
+      <span class="dot">·</span>
+      <span>
+        <span th:text="#{footer.poweredByBefore}">由</span>
+        <a
+          class="footer-meta-link"
+          href="https://www.halo.run/"
+          target="_blank"
+          rel="noopener"
+          >Halo</a
+        >
+        <span th:text="#{footer.poweredByAfter}">驱动</span>
+      </span>
+      <span class="dot">·</span>
+      <span class="footer-theme-credit">
+        <a
+          class="footer-meta-link"
+          href="https://yuubari.cn/LightNotes"
+          target="_blank"
+          rel="noopener"
+          ><span th:text="#{footer.themeName}">莱洛丝</span></a
+        ><span th:text="#{footer.themeRest}">主题</span>
+      </span>
+    </p>
+    <th:block th:if="${not #strings.isEmpty(theme.config.footer?.site_start_date)}">
+      <span class="footer-row-sep" aria-hidden="true">|</span>
+      <p class="footer-runtime">
+        <span th:text="#{footer.runtime.prefix}">本站已运行</span>
+        <span
+          id="ln-runtime"
+          th:attr="data-start=${theme.config.footer?.site_start_date}"
+          >--</span
+        >
+      </p>
+    </th:block>
+  </div>
+
+  <!-- 备案信息（主题设置 → 页脚 中配置） -->
+  <ul
+    class="footer-beian"
+    th:if="${(theme.config.footer?.enable_icp ?: true) or (theme.config.footer?.enable_gongan ?: true) or not #lists.isEmpty(theme.config.footer?.custom_items?.list)}"
+  >
+    <li th:if="${theme.config.footer?.enable_icp ?: true}">
+      <a
+        th:href="${not #strings.isEmpty(theme.config.footer?.icp_link) ? theme.config.footer.icp_link : 'https://beian.miit.gov.cn/'}"
+        target="_blank"
+        rel="noopener"
+      >
+        <img
+          class="beian-icon"
+          th:src="@{/assets/images/icp.webp}"
+          alt="ICP备案"
+          loading="lazy"
+        />
+        <span
+          th:text="${not #strings.isEmpty(theme.config.footer?.icp_text) ? theme.config.footer.icp_text : 'ICP备案'}"
+          >ICP备案</span
+        >
+      </a>
+    </li>
+    <li th:if="${theme.config.footer?.enable_gongan ?: true}">
+      <a
+        th:href="${not #strings.isEmpty(theme.config.footer?.gongan_link) ? theme.config.footer.gongan_link : 'https://beian.mps.gov.cn/'}"
+        target="_blank"
+        rel="noopener"
+      >
+        <img
+          class="beian-icon"
+          th:src="@{/assets/images/gongan.png}"
+          alt="公安备案"
+          loading="lazy"
+        />
+        <span
+          th:text="${not #strings.isEmpty(theme.config.footer?.gongan_text) ? theme.config.footer.gongan_text : '公安备案'}"
+          >公安备案</span
+        >
+      </a>
+    </li>
+    <li th:each="item : ${theme.config.footer?.custom_items?.list}">
+      <th:block th:if="${not #strings.isEmpty(item.link)}">
+        <a th:href="${item.link}" target="_blank" rel="noopener">
+          <img
+            class="beian-icon"
+            th:if="${not #strings.isEmpty(item.icon)}"
+            th:src="${item.icon}"
+            alt=""
+            loading="lazy"
+          />
+          <span th:if="${not #strings.isEmpty(item.text)}" th:text="${item.text}"></span>
+        </a>
+      </th:block>
+      <th:block th:unless="${not #strings.isEmpty(item.link)}">
+        <span class="beian-static">
+          <img
+            class="beian-icon"
+            th:if="${not #strings.isEmpty(item.icon)}"
+            th:src="${item.icon}"
+            alt=""
+            loading="lazy"
+          />
+          <span th:if="${not #strings.isEmpty(item.text)}" th:text="${item.text}"></span>
+        </span>
+      </th:block>
+    </li>
+  </ul>
+
+  <!-- 页脚自定义内容（支持 HTML 富文本，单独一行） -->
+  <div
+    class="footer-custom"
+    th:if="${not #strings.isEmpty(theme.config.footer?.footer_custom_html)}"
+    th:utext="${theme.config.footer?.footer_custom_html}"
+  ></div>
+</th:block>
+</body>
+</html>

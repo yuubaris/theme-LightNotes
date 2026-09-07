@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="https://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+</head>
+<body>
+<!-- 周末与节假日倒计时组件（样式见 assets/css/style.css 中 .ln-holiday） -->
+<!-- 数据来自「主题设置 → 假期倒计时」中配置的 JSON 地址；未配置时读取当前站点 /upload/ 下的同名文件，加载失败则回退到内置 2026 年默认安排 -->
+<th:block th:fragment="holiday">
+  <div class="ln-holiday">
+    <!-- 周末倒计时 -->
+    <div class="ln-holiday__item" id="ln-weekend-card">
+      <div class="ln-holiday__head">
+        <span class="ln-holiday__icon" aria-hidden="true">🎉</span>
+        <span class="ln-holiday__name">周末倒计时</span>
+      </div>
+      <div class="ln-holiday__progress">
+        <div class="ln-holiday__meta">
+          <span>进度 <b class="ln-holiday__progress-text">0%</b></span>
+          <span class="ln-holiday__remain">还有 <b class="ln-holiday__countdown">0天00:00:00</b></span>
+        </div>
+        <div class="ln-holiday__track">
+          <span class="ln-holiday__fill" style="width: 0%"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 节假日倒计时 -->
+    <div class="ln-holiday__item" id="ln-holiday-card">
+      <div class="ln-holiday__head">
+        <span class="ln-holiday__icon" aria-hidden="true">🎊</span>
+        <span class="ln-holiday__name ln-holiday-name">节假日</span>
+      </div>
+      <div class="ln-holiday__progress">
+        <div class="ln-holiday__meta">
+          <span>进度 <b class="ln-holiday__progress-text">0%</b></span>
+          <span class="ln-holiday__remain">还有 <b class="ln-holiday__countdown">0天00:00:00</b></span>
+        </div>
+        <div class="ln-holiday__track">
+          <span class="ln-holiday__fill" style="width: 0%"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script th:inline="javascript">
+    (function () {
+      'use strict';
+
+      // 内置兜底：2026 年国务院安排，仅当对应 JSON 加载失败时使用
+      var DEFAULT_HOLIDAYS = [
+        { name: "元旦", date: "2026-01-01", duration: 3 },
+        { name: "春节", date: "2026-02-15", duration: 9 },
+        { name: "清明节", date: "2026-04-04", duration: 3 },
+        { name: "劳动节", date: "2026-05-01", duration: 5 },
+        { name: "端午节", date: "2026-06-19", duration: 3 },
+        { name: "中秋节", date: "2026-09-25", duration: 3 },
+        { name: "国庆节", date: "2026-10-01", duration: 7 }
+      ];
+      var DEFAULT_MAKEUP = [
+        "2026-01-04", "2026-02-14", "2026-02-28", "2026-05-09", "2026-09-20", "2026-10-10"
+      ];
+
+      // JSON 地址：优先使用「主题设置 → 假期倒计时」中填写的地址，留空则取当前站点 /upload/ 下的同名文件
+      var defaultCalenderUrl = /*[[@{/upload/Calender.json}]]*/ "/upload/Calender.json";
+      var defaultNoWeekendUrl = /*[[@{/upload/no_weekend.json}]]*/ "/upload/no_weekend.json";
+      var calenderSetting = /*[[${theme.config.holiday?.calender_json}]]*/ "";
+      var noWeekendSetting = /*[[${theme.config.holiday?.no_weekend_json}]]*/ "";
+      var calenderJsonUrl = calenderSetting ? calenderSetting : defaultCalenderUrl;
+      var noWeekendJsonUrl = noWeekendSetting ? noWeekendSetting : defaultNoWeekendUrl;
+
+      function formatTime(seconds) {
+        if (seconds <= 0) return "0天00:00:00";
+        var days = Math.floor(seconds / 86400);
+        var hours = Math.floor((seconds % 86400) / 3600);
+        var minutes = Math.floor((seconds % 3600) / 60);
+        var secs = seconds % 60;
+        return (
+          days + "天" +
+          String(hours).padStart(2, "0") + ":" +
+          String(minutes).padStart(2, "0") + ":" +
+          String(secs).padStart(2, "0")
+        );
+      }
+
+      function fetchJson(url) {
+        return fetch(url).then(function (response) {
+          if (!response.ok) throw new Error("HTTP " + response.status);
+          return response.json();
+        });
+      }
+
+      /* ---------- 调休数据（周末上班日，no_weekend.json） ---------- */
+      var makeupLoaded = false;
+      var makeupDates = null; // null 表示未取到，回退内置默认
+
+      function getNoWeekendDates() {
+        if (makeupLoaded) {
+          return Promise.resolve(makeupDates === null ? DEFAULT_MAKEUP : makeupDates);
+        }
+        return fetchJson(noWeekendJsonUrl)
+          .then(function (data) {
+            makeupLoaded = true;
+            makeupDates = data && data.noweekend ? data.noweekend : [];
+            return makeupDates;
+          })
+          .catch(function () {
+            makeupLoaded = true;
+            makeupDates = null;
+            return DEFAULT_MAKEUP;
+          });
+      }
+
+      function isNoWeekend(date, noWeekendDates) {
+        var dateStr = date.toISOString().split("T")[0];
+        return noWeekendDates.indexOf(dateStr) !== -1;
+      }
+
+      // 找到最近一个未被调休占用的周末起点（周五 17:30）
+      function findValidStartDate(baseDate, noWeekendDates) {
+        var date = new Date(baseDate);
+        var attempts = 0;
+        while (attempts < 14) {
+          var saturday = new Date(date);
+          saturday.setDate(date.getDate() + 1);
+          var sunday = new Date(date);
+          sunday.setDate(date.getDate() + 2);
+          if (!isNoWeekend(saturday, noWeekendDates) && !isNoWeekend(sunday, noWeekendDates)) {
+            date.setHours(17, 30, 0, 0);
+            return date;
+          }
+          date.setDate(date.getDate() + 7);
+          attempts++;
+        }
+        date.setHours(17, 30, 0, 0);
+        return date;
+      }
+
+      function getCurrentWeekendRange(noWeekendDates) {
+        var now = new Date();
+        var day = now.getDay();
+        var startDate;
+        if (day === 0) {
+          startDate = new Date(now);
+          startDate.setDate(now.getDate() - 2);
+        } else if (day === 6) {
+          startDate = new Date(now);
+          startDate.setDate(now.getDate() - 1);
+        } else {
+          startDate = new Date(now);
+          startDate.setDate(now.getDate() + (5 - day));
+        }
+
+        startDate = findValidStartDate(startDate, noWeekendDates);
+        var endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + 2);
+        endDate.setHours(24, 0, 0, 0);
+        return { start: startDate, end: endDate };
+      }
+
+      function getLastWeekendEnd() {
+        var now = new Date();
+        var day = now.getDay();
+        var lastSunday = new Date(now);
+        if (day === 0) {
+          lastSunday.setDate(now.getDate() - 7);
+        } else {
+          lastSunday.setDate(now.getDate() - day);
+        }
+        lastSunday.setHours(24, 0, 0, 0);
+        return lastSunday;
+      }
+
+      function updateCountdown(elementId, timeInfo) {
+        var now = new Date();
+        var isWeekend = elementId === "ln-weekend-card";
+        var container = document.getElementById(elementId);
+        if (!container) return false;
+
+        if (isWeekend) {
+          var start = timeInfo.start;
+          var end = timeInfo.end;
+          var totalWeekendDuration = end - start;
+          var lastWeekendEnd = getLastWeekendEnd();
+          var totalWaitDuration = start - lastWeekendEnd;
+          var remainingTime;
+          var progress;
+
+          if (now < start) {
+            remainingTime = start - now;
+            progress = Math.max(0, Math.min(100, 100 - ((remainingTime / totalWaitDuration) * 100)));
+          } else if (now < end) {
+            remainingTime = end - now;
+            progress = 100 - ((remainingTime / totalWeekendDuration) * 100);
+          } else {
+            return false;
+          }
+
+          progress = Math.max(0, Math.min(100, Math.round(progress)));
+          container.querySelector(".ln-holiday__countdown").textContent = formatTime(Math.floor(remainingTime / 1000));
+          container.querySelector(".ln-holiday__fill").style.width = progress + "%";
+          container.querySelector(".ln-holiday__progress-text").textContent = progress + "%";
+          return true;
+        }
+
+        var startHoliday = timeInfo.start;
+        var endHoliday = timeInfo.end;
+        var totalPeriodStart = timeInfo.totalPeriodStart;
+        var totalPeriodEnd = timeInfo.totalPeriodEnd;
+        var totalDuration = totalPeriodEnd - totalPeriodStart;
+        var remaining;
+        var p;
+
+        if (now >= startHoliday && now < endHoliday) {
+          remaining = endHoliday - now;
+          p = 100;
+        } else if (now >= totalPeriodStart && now < startHoliday) {
+          remaining = startHoliday - now;
+          p = Math.max(0, Math.min(100, ((now - totalPeriodStart) / totalDuration) * 100));
+        } else {
+          return false;
+        }
+
+        p = Math.max(0, Math.min(100, Math.round(p)));
+        container.querySelector(".ln-holiday__countdown").textContent = formatTime(Math.floor(remaining / 1000));
+        container.querySelector(".ln-holiday__fill").style.width = p + "%";
+        container.querySelector(".ln-holiday__progress-text").textContent = p + "%";
+        container.querySelector(".ln-holiday-name").textContent = timeInfo.name;
+        return true;
+      }
+
+      /* ---------- 节假日数据（Calender.json：{dates:[{date,name,duration}]}） ---------- */
+      var holidayLoaded = false;
+      var holidayResult = null;
+
+      // 从给定的节假日列表里选最近的下一个；没有则返回 null
+      function pickNextHoliday(items) {
+        var now = new Date();
+        // 上一段已结束节假日的终点锚点（2025-01-02 00:00:00 起算）
+        var previousHolidayEnd = new Date(2025, 0, 2);
+        var i, holidayEnd, startDate, endDate;
+        var nextHoliday = null;
+
+        for (i = 0; i < items.length; i++) {
+          holidayEnd = new Date(items[i].date);
+          holidayEnd.setDate(holidayEnd.getDate() + items[i].duration - 1);
+          holidayEnd.setHours(24, 0, 0, 0);
+          if (holidayEnd < now && holidayEnd > previousHolidayEnd) {
+            previousHolidayEnd = holidayEnd;
+          }
+        }
+
+        for (i = 0; i < items.length; i++) {
+          startDate = new Date(items[i].date);
+          startDate.setDate(startDate.getDate() - 1);
+          startDate.setHours(17, 30, 0, 0);
+          endDate = new Date(items[i].date);
+          endDate.setDate(endDate.getDate() + items[i].duration - 1);
+          endDate.setHours(24, 0, 0, 0);
+
+          if (endDate > now && (!nextHoliday || startDate < nextHoliday.start)) {
+            nextHoliday = {
+              start: startDate,
+              end: endDate,
+              name: items[i].name,
+              totalPeriodStart: previousHolidayEnd,
+              totalPeriodEnd: startDate
+            };
+          }
+        }
+
+        return nextHoliday;
+      }
+
+      function emptyHoliday() {
+        var now = new Date();
+        return {
+          start: new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000),
+          end: new Date(now.getTime() + 366 * 24 * 60 * 60 * 1000),
+          name: "暂无节假日",
+          totalPeriodStart: new Date(2025, 0, 2),
+          totalPeriodEnd: new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000)
+        };
+      }
+
+      function getNextHoliday() {
+        if (holidayLoaded) return Promise.resolve(holidayResult);
+        return fetchJson(calenderJsonUrl)
+          .then(function (data) {
+            holidayLoaded = true;
+            var items = [];
+            if (data && data.dates) {
+              for (var i = 0; i < data.dates.length; i++) {
+                var row = data.dates[i];
+                if (!row || !row.date) continue;
+                var dur = parseInt(row.duration, 10);
+                items.push({
+                  date: row.date,
+                  duration: dur && dur > 0 ? dur : 1,
+                  name: row.name || "节假日"
+                });
+              }
+            }
+            holidayResult = pickNextHoliday(items) || emptyHoliday();
+            return holidayResult;
+          })
+          .catch(function () {
+            holidayLoaded = true;
+            // JSON 取不到时回退内置 2026 年安排
+            holidayResult = pickNextHoliday(DEFAULT_HOLIDAYS) || emptyHoliday();
+            return holidayResult;
+          });
+      }
+
+      function init() {
+        function tickWeekend() {
+          getNoWeekendDates().then(function (noWeekendDates) {
+            var ok = updateCountdown("ln-weekend-card", getCurrentWeekendRange(noWeekendDates));
+            setTimeout(tickWeekend, ok ? 1000 : 5 * 60 * 1000);
+          });
+        }
+
+        function tickHoliday() {
+          getNextHoliday().then(function (holiday) {
+            var ok = updateCountdown("ln-holiday-card", holiday);
+            var now = new Date();
+            if (
+              holiday.start < new Date(now.getTime() + 24 * 60 * 60 * 1000) ||
+              (now > holiday.start && now < holiday.end)
+            ) {
+              setTimeout(tickHoliday, ok ? 1000 : 5 * 60 * 1000);
+            } else {
+              setTimeout(tickHoliday, 5 * 60 * 1000);
+            }
+          });
+        }
+
+        tickWeekend();
+        tickHoliday();
+      }
+
+      init();
+    })();
+  </script>
+</th:block>
+</body>
+</html>

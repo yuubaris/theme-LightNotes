@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="https://www.thymeleaf.org"
+  th:replace="~{layout :: html(head = ~{::head}, content = ~{::content})}"
+>
+  <th:block th:fragment="head">
+    <title th:text="|#{friends.title} - ${site.title}|">朋友圈 - 站点标题</title>
+  </th:block>
+
+  <th:block th:fragment="content">
+    <div class="home-layout">
+      <div class="main-col">
+        <div class="page-title-bar friends-header glass-card">
+          <div class="friends-title">
+            <h1 class="page-title" th:text="#{friends.title}">朋友圈</h1>
+            <p class="page-subtitle" th:text="#{friends.subtitle}">来自友站的最新动态</p>
+          </div>
+          <div class="friends-actions" th:if="${theme.config.links?.enable_submit}">
+            <a class="apply-link btn btn-ghost btn-sm" th:href="@{/links#add}" th:text="#{friends.apply}">申请友链</a>
+          </div>
+        </div>
+
+        <!-- 订阅汇总信息 -->
+        <div class="friends-meta glass-card" th:if="${friends.total > 0}">
+          <span class="icon friends-meta-count" th:text="${friends.total}">0</span>
+          <span class="friends-meta-label" th:text="#{friends.totalLabel}">篇订阅</span>
+          <span class="friends-meta-hint" th:if="${#lists.isEmpty(friends.items) and friends.total > 0}" th:text="#{friends.noMore}">已是最后一页</span>
+        </div>
+
+        <div class="card-list" th:if="${not #lists.isEmpty(friends.items)}">
+          <article
+            class="friend-card glass-card"
+            th:each="friend : ${friends.items}"
+            th:with="spec = ${friend.spec}"
+          >
+            <header class="friend-header">
+              <a
+                class="friend-author"
+                th:href="@{${spec.authorUrl}}"
+                target="_blank"
+                rel="noopener"
+              >
+                <span class="avatar avatar-md avatar-text">
+                  <img
+                    th:if="${not #strings.isEmpty(spec.logo)}"
+                    th:src="${spec.logo}"
+                    th:alt="${spec.author}"
+                    loading="lazy"
+                  />
+                  <span
+                    th:if="${#strings.isEmpty(spec.logo)}"
+                    th:text="${#strings.substring(spec.author, 0, 1)}"
+                    >友</span
+                  >
+                </span>
+                <span class="friend-author-info">
+                  <span class="friend-site" th:text="${spec.author}">站点名</span>
+                  <span class="friend-time" th:if="${spec.pubDate != null}">
+                    <time
+                      th:datetime="${spec.pubDate}"
+                      th:text="${#temporals.format(spec.pubDate, 'yyyy-MM-dd HH:mm')}"
+                      >2026-01-01 12:00</time
+                    >
+                  </span>
+                </span>
+              </a>
+            </header>
+
+            <a
+              class="friend-content"
+              th:href="@{${spec.postLink}}"
+              target="_blank"
+              rel="noopener"
+            >
+              <h2 class="friend-title" th:text="${spec.title}">文章标题</h2>
+              <p
+                class="friend-desc"
+                th:if="${not #strings.isEmpty(spec.description)}"
+                th:text="${spec.description}"
+                >文章描述</p
+              >
+            </a>
+
+            <footer class="friend-footer">
+              <a
+                class="btn btn-ghost btn-sm"
+                th:href="@{${spec.postLink}}"
+                target="_blank"
+                rel="noopener"
+              >
+                <span th:text="#{friends.readmore}">阅读原文</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="7" y1="17" x2="17" y2="7" />
+                  <polyline points="7 7 17 7 17 17" />
+                </svg>
+              </a>
+            </footer>
+          </article>
+        </div>
+
+        <div class="empty-state glass-card" th:unless="${not #lists.isEmpty(friends.items)}">
+          <p th:text="#{friends.empty}">暂无订阅内容</p>
+          <p class="empty-hint" th:text="#{friends.emptyHint}">去添加一些友链的 RSS 订阅吧</p>
+        </div>
+
+        <nav th:replace="~{modules/pagination :: pagination(pageResult=${friends})}"></nav>
+      </div>
+
+      <div th:replace="~{modules/sidebar :: sidebar}"></div>
+    </div>
+  </th:block>
+</html>

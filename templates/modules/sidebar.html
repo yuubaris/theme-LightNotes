@@ -1,0 +1,45 @@
+<!-- 侧边栏：小组件严格按「主题设置 → 侧边栏 → 小组件与显示顺序」渲染。
+     尚未保存新配置时，按下方默认顺序完整展示，避免页面空白。 -->
+<aside
+  class="sidebar"
+  th:fragment="sidebar"
+  th:with="widgetConfigs = ${theme.config.sidebar?.widgets?.index != null ? theme.config.sidebar.widgets.index : null}"
+>
+  <!-- 已保存顺序配置：遍历并按类型渲染 -->
+  <th:block th:if="${widgetConfigs != null}">
+    <th:block th:each="item : ${widgetConfigs}">
+      <th:block th:switch="${item.widget}">
+        <th:block th:case="'welcome'">
+          <th:block th:replace="~{modules/widgets :: widget-welcome}"></th:block>
+        </th:block>
+        <th:block th:case="'quicknav'">
+          <th:block th:replace="~{modules/widgets :: widget-quicknav}"></th:block>
+        </th:block>
+        <th:block th:case="'hottags'">
+          <th:block th:replace="~{modules/widgets :: widget-hottags}"></th:block>
+        </th:block>
+        <th:block th:case="'stats'">
+          <th:block th:replace="~{modules/widgets :: widget-stats}"></th:block>
+        </th:block>
+        <th:block th:case="'holiday'">
+          <th:block th:replace="~{modules/widgets :: widget-holiday}"></th:block>
+        </th:block>
+        <th:block th:case="'custom'">
+          <th:block th:replace="~{modules/widgets :: widget-custom(item=${item})}"></th:block>
+        </th:block>
+        <th:block th:case="'footer'">
+          <th:block th:replace="~{modules/widgets :: widget-footer}"></th:block>
+        </th:block>
+      </th:block>
+    </th:block>
+  </th:block>
+
+  <!-- 未配置（升级主题后尚未保存设置）：默认顺序 -->
+  <th:block th:unless="${widgetConfigs != null}">
+    <th:block th:replace="~{modules/widgets :: widget-welcome}"></th:block>
+    <th:block th:replace="~{modules/widgets :: widget-quicknav}"></th:block>
+    <th:block th:replace="~{modules/widgets :: widget-hottags}"></th:block>
+    <th:block th:replace="~{modules/widgets :: widget-stats}"></th:block>
+    <th:block th:replace="~{modules/widgets :: widget-holiday}"></th:block>
+  </th:block>
+</aside>

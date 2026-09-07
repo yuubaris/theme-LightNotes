@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="https://www.thymeleaf.org"
+  th:replace="~{layout :: html(head = ~{::head}, content = ~{::content})}"
+>
+  <th:block th:fragment="head">
+    <title th:text="|#{page.tags} - ${site.title}|">标签 - 站点标题</title>
+  </th:block>
+
+  <th:block th:fragment="content">
+    <div class="home-layout">
+      <div class="main-col">
+        <div class="page-title-bar glass-card">
+          <h1 class="page-title" th:text="#{page.tags}">标签</h1>
+        </div>
+
+        <div class="tag-wall glass-card" th:if="${not #lists.isEmpty(tags)}">
+          <a
+            class="tag-pill"
+            th:each="tag : ${tags}"
+            th:href="@{${tag.status.permalink}}"
+            th:attr="data-count=${tag.postCount}"
+          >
+            <span th:text="${tag.spec.displayName}">标签名</span>
+            <span class="tag-count" th:text="${tag.postCount}">0</span>
+          </a>
+        </div>
+        <div class="empty-state glass-card" th:unless="${not #lists.isEmpty(tags)}">
+          <p th:text="#{empty.tags}">还没有标签哦～</p>
+        </div>
+      </div>
+
+      <div th:replace="~{modules/sidebar :: sidebar}"></div>
+    </div>
+  </th:block>
+</html>

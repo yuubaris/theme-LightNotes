@@ -1,0 +1,298 @@
+apiVersion: v1alpha1
+kind: Setting
+metadata:
+  name: theme-lightnotes-setting
+spec:
+  forms:
+    - group: global
+      label: 全局
+      formSchema:
+        - $formkit: text
+          name: slogan
+          label: 站点口号
+          value: "记录每一个闪闪发光的日子"
+          help: 显示在导航栏站点名称旁边的手写体文案
+        - $formkit: text
+          name: background
+          label: 背景插画地址
+          value: ""
+          help: 页面背景插画 URL；留空则不显示背景插画，展示主题默认的渐变色背景
+        - $formkit: number
+          name: background_blur
+          label: 背景虚化程度
+          value: 8
+          help: 背景插画的高斯模糊半径（px），0 表示不虚化
+        - $formkit: radio
+          name: color_scheme
+          label: 默认配色模式
+          value: auto
+          options:
+            - label: 跟随系统
+              value: auto
+            - label: 浅色
+              value: light
+            - label: 深色
+              value: dark
+    - group: home
+      label: 首页
+      formSchema:
+        - $formkit: radio
+          name: default_tab
+          label: 默认显示的 Tab
+          value: moments
+          options:
+            - label: 说说（需安装瞬间插件）
+              value: moments
+            - label: 文章
+              value: posts
+          help: 访客首次进入首页时默认选中的标签页；未安装瞬间插件时自动回退为文章
+        - $formkit: number
+          name: moments_size
+          label: 首页说说加载数量
+          value: 10
+    - group: sidebar
+      label: 侧边栏
+      formSchema:
+        - $formkit: group
+          name: widgets
+          label: 小组件与显示顺序
+          help: 按需增删小组件并拖拽调整顺序，越靠前显示越靠上；周末 / 节假日数据文件地址请在下方「假期倒计时」设置组中配置
+          children:
+            - $formkit: array
+              name: index
+              label: 侧边栏小组件
+              itemLabels:
+                - type: text
+                  label: $value.widget
+              value:
+                - widget: "welcome"
+                - widget: "quicknav"
+                - widget: "hottags"
+                - widget: "stats"
+                - widget: "holiday"
+              children:
+                - $formkit: select
+                  name: widget
+                  label: 小组件
+                  options:
+                    - value: "welcome"
+                      label: 欢迎卡片
+                    - value: "quicknav"
+                      label: 快速导航
+                    - value: "hottags"
+                      label: 推荐标签
+                    - value: "stats"
+                      label: 站点统计
+                    - value: "holiday"
+                      label: 假期倒计时
+                    - value: "custom"
+                      label: 自定义 HTML
+                    - value: "footer"
+                      label: 页脚（站点信息）
+                - $formkit: text
+                  name: title
+                  label: 自定义标题
+                  placeholder: 可留空（留空则不显示标题）
+                  if: "$value.widget === 'custom'"
+                - $formkit: textarea
+                  name: content
+                  label: 自定义内容
+                  rows: 6
+                  placeholder: 支持 HTML 富文本
+                  if: "$value.widget === 'custom'"
+        - $formkit: text
+          name: welcome_title
+          label: 欢迎卡片标题
+          value: "欢迎来到莱洛丝 ♡"
+        - $formkit: textarea
+          name: welcome_content
+          label: 欢迎卡片内容
+          value: "这里是一个温柔的小角落，写写说说、发发照片，把生活里的小确幸都轻轻收藏起来。"
+        - $formkit: number
+          name: welcome_carousel_interval
+          label: 头像轮播间隔（秒）
+          value: 3
+          min: 1
+          help: 仅当配置了多张轮播图时生效
+        - $formkit: group
+          name: welcome_avatar_images
+          label: 头像轮播图
+          help: 从上到下依次轮播；未配置或列表为空时使用主题默认头像
+          children:
+            - $formkit: array
+              name: list
+              label: 头像图片列表
+              value: []
+              children:
+                - $formkit: text
+                  name: url
+                  label: 图片地址
+                  value: ""
+                  placeholder: https://example.com/avatar.png
+        - $formkit: number
+          name: hot_tags_count
+          label: 推荐标签数量
+          value: 12
+    - group: holiday
+      label: 假期倒计时
+      formSchema:
+        - $formkit: text
+          name: calender_json
+          label: 节假日数据 JSON 地址
+          value: ""
+          placeholder: /upload/Calender.json 或 https://example.com/Calender.json
+          help: 留空默认读取当前站点的 /upload/Calender.json。填写其它站点的完整 URL 时，该站点需允许跨域访问（返回 Access-Control-Allow-Origin），否则浏览器会拦截。
+        - $formkit: text
+          name: no_weekend_json
+          label: 调休数据 JSON 地址
+          value: ""
+          placeholder: /upload/no_weekend.json 或 https://example.com/no_weekend.json
+          help: 记录调休补班日（周末上班）的文件。留空默认读取当前站点的 /upload/no_weekend.json。文件格式：节假日 Calender.json → {"dates":[{"date":"2026-10-01","name":"国庆节","duration":7}]}；调休 no_weekend.json → {"noweekend":["2026-10-10"]}。
+    - group: page_features
+      label: 页面功能
+      formSchema:
+        - $formkit: checkbox
+          name: external_link_prompt
+          label: 外链提示
+          value: true
+          help: 点击跳转到外部站点的链接时，先弹出安全访问确认弹窗
+        - $formkit: text
+          name: external_link_image
+          label: 外链提示图片
+          value: "/upload/safepage.png"
+          help: 确认弹窗右侧的插画图片地址；留空则只显示文字区域
+        - $formkit: checkbox
+          name: tab_title_switch
+          label: 标签页标题切换
+          value: true
+          help: 切出当前标签页时把标题改成“离开”文案，切回时短暂显示“欢迎回来”文案后再还原原标题
+        - $formkit: text
+          name: tab_title_leave
+          label: 切出时标题
+          value: "あの日に見た夢の続きはまだまだ見たい。"
+        - $formkit: number
+          name: tab_title_leave_delay
+          label: 切出延迟（毫秒）
+          value: 50
+          min: 0
+          max: 5000
+          step: 50
+          help: 页面切出后延迟多久再修改标题
+        - $formkit: text
+          name: tab_title_return
+          label: 切回时标题
+          value: "何処までも行けるさ、君となら。"
+        - $formkit: number
+          name: tab_title_return_delay
+          label: 切回延迟（毫秒）
+          value: 0
+          min: 0
+          max: 5000
+          step: 50
+          help: 页面切回后延迟多久修改为“欢迎回来”标题
+        - $formkit: number
+          name: tab_title_restore_delay
+          label: 还原延迟（毫秒）
+          value: 3000
+          min: 0
+          max: 10000
+          step: 500
+          help: “欢迎回来”标题显示多久后恢复原标题
+    - group: effects
+      label: 特效
+      formSchema:
+        - $formkit: checkbox
+          name: effects_enabled
+          label: 飘花 / 飘雪特效
+          value: true
+          help: 全屏飘落樱花或雪花粒子动效，关闭后不再加载特效脚本
+        - $formkit: radio
+          name: effects_type
+          label: 特效类型
+          value: auto
+          options:
+            - label: 自动（浅色飘樱花、深色飘雪花）
+              value: auto
+            - label: 樱花花瓣
+              value: flower
+            - label: 雪花
+              value: snow
+          help: 选择固定特效，或根据明暗模式自动切换
+        - $formkit: checkbox
+          name: decor_enabled
+          label: 漂浮装饰（云朵与爱心）
+          value: true
+          help: 页面背景中的云朵与爱心漂浮动画
+    - group: footer
+      label: 页脚
+      formSchema:
+        - $formkit: checkbox
+          name: enable_icp
+          label: 显示 ICP 备案
+          value: true
+        - $formkit: text
+          name: icp_text
+          label: ICP 备案号
+          value: "粤ICP备00000000号"
+        - $formkit: text
+          name: icp_link
+          label: ICP 备案链接
+          value: "https://beian.miit.gov.cn/"
+        - $formkit: checkbox
+          name: enable_gongan
+          label: 显示公安备案
+          value: true
+        - $formkit: text
+          name: gongan_text
+          label: 公安备案号
+          value: "粤公网安备 44000000000000号"
+        - $formkit: text
+          name: gongan_link
+          label: 公安备案链接
+          value: "https://beian.mps.gov.cn/"
+        - $formkit: text
+          name: site_start_date
+          label: 建站日期
+          value: ""
+          placeholder: "2020-01-01"
+          help: 格式 YYYY-MM-DD；填写后页脚会实时显示「本站已运行 xxx小时xx分xx秒」
+        - $formkit: textarea
+          name: footer_custom_html
+          label: 页脚自定义内容
+          value: ""
+          help: 支持 HTML 富文本，将显示在备案信息下方并单独成行
+        - $formkit: group
+          name: custom_items
+          label: 自定义备案
+          help: 在 ICP / 公安备案之外追加自定义徽标（如软著、网安等），每项可配置图标、文字与链接
+          children:
+            - $formkit: array
+              name: list
+              label: 自定义备案列表
+              value: []
+              children:
+                - $formkit: text
+                  name: icon
+                  label: 图标地址
+                  value: ""
+                  placeholder: https://example.com/icon.png（可留空）
+                - $formkit: text
+                  name: text
+                  label: 文字
+                  value: ""
+                - $formkit: text
+                  name: link
+                  label: 链接
+                  value: ""
+                  placeholder: 可留空（无链接则不跳转）
+    - group: seo
+      label: SEO
+      formSchema:
+        - $formkit: checkbox
+          name: enable_metadata
+          label: 输出 canonical 和社交分享标签
+          value: true
+        - $formkit: checkbox
+          name: enable_structured_data
+          label: 输出文章结构化数据
+          value: true

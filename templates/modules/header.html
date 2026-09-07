@@ -1,0 +1,211 @@
+<header class="site-header" th:fragment="header">
+  <div class="container">
+    <div class="header-bar glass-card">
+      <div class="brand">
+        <a class="brand-link" th:href="@{/}">
+          <span class="brand-logo">
+            <img
+              th:src="${not #strings.isEmpty(site.logo)} ? ${site.logo} : ${theme.spec.logo}"
+              th:alt="${site.title}"
+            />
+          </span>
+          <span class="brand-text">
+            <span class="brand-name" th:text="${site.title}">LightNotes</span>
+            <span
+              class="brand-slogan"
+              th:text="${theme.config.global?.slogan ?: '记录每一个闪闪发光的日子'}"
+              >记录每一个闪闪发光的日子</span
+            >
+          </span>
+        </a>
+      </div>
+
+      <nav class="main-nav" id="ln-nav" aria-label="主导航">
+        <th:block th:with="primaryMenu = ${menuFinder.getPrimary()}">
+          <ul
+            class="nav-list"
+            th:if="${primaryMenu != null and not #lists.isEmpty(primaryMenu.menuItems)}"
+          >
+            <th:block
+              th:replace="~{modules/header :: navItems(menuItems = ${primaryMenu.menuItems})}"
+            ></th:block>
+          </ul>
+          <ul
+            class="nav-list"
+            th:unless="${primaryMenu != null and not #lists.isEmpty(primaryMenu.menuItems)}"
+          >
+            <li class="nav-item"><a th:href="@{/}" th:text="#{nav.home}">首页</a></li>
+            <li class="nav-item" th:if="${pluginFinder.available('PluginMoments')}">
+              <a th:href="@{/moments}" th:text="#{nav.moments}">说说</a>
+            </li>
+            <li class="nav-item">
+              <a th:href="@{${site.routes.archivesUri}}" th:text="#{nav.posts}">文章</a>
+            </li>
+            <li class="nav-item">
+              <a th:href="@{${site.routes.tagsUri}}" th:text="#{nav.tags}">标签</a>
+            </li>
+          </ul>
+        </th:block>
+      </nav>
+
+      <div class="header-actions">
+        <button
+          type="button"
+          class="icon-btn"
+          id="ln-theme-toggle"
+          aria-label="切换明暗模式"
+          title="切换明暗模式"
+        >
+          <svg
+            class="icon-sun"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="5" />
+            <line x1="12" y1="1" x2="12" y2="3" />
+            <line x1="12" y1="21" x2="12" y2="23" />
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+            <line x1="1" y1="12" x2="3" y2="12" />
+            <line x1="21" y1="12" x2="23" y2="12" />
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+          </svg>
+          <svg
+            class="icon-moon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+        </button>
+
+        <a sec:authorize="isAnonymous()" class="btn btn-primary btn-sm" th:href="@{/login}">
+          登录 / 注册
+        </a>
+
+        <!-- 已登录：仅显示头像，悬停 / 点击弹出用户菜单 -->
+        <div class="user-box" id="ln-user-box" sec:authorize="isAuthenticated()">
+          <button
+            type="button"
+            class="user-entry"
+            id="ln-user-entry"
+            aria-label="用户菜单"
+            title="用户菜单"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >
+            <span class="avatar-wrapper">
+              <img class="user-avatar" id="ln-user-avatar" alt="" hidden />
+              <svg
+                class="user-avatar-fallback"
+                id="ln-user-avatar-fallback"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </span>
+          </button>
+
+          <div class="user-menu" id="ln-user-menu" role="menu" aria-label="用户菜单">
+            <a
+              class="user-menu-item"
+              sec:authorize="hasRole('super-role')"
+              th:href="@{/console}"
+              role="menuitem"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="3" />
+                <path
+                  d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+                />
+              </svg>
+              <span>管理后台</span>
+            </a>
+            <a class="user-menu-item logout" th:href="@{/logout}" role="menuitem">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              <span>退出登录</span>
+            </a>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="icon-btn nav-toggle"
+          id="ln-nav-toggle"
+          aria-label="展开菜单"
+          aria-expanded="false"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- 递归渲染菜单项（支持任意层级下拉） -->
+<th:block th:fragment="navItems(menuItems)">
+  <li
+    class="nav-item"
+    th:each="item : ${menuItems}"
+    th:classappend="${not #lists.isEmpty(item.children)} ? 'has-children'"
+  >
+    <a
+      th:href="@{${item.status.href}}"
+      th:target="${item.spec.target?.value}"
+      th:text="${item.status.displayName}"
+      th:aria-haspopup="${not #lists.isEmpty(item.children)} ? 'true' : null"
+    >
+      菜单项
+    </a>
+    <ul class="submenu" th:if="${not #lists.isEmpty(item.children)}">
+      <th:block
+        th:replace="~{modules/header :: navItems(menuItems = ${item.children})}"
+      ></th:block>
+    </ul>
+  </li>
+</th:block>

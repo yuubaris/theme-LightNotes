@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="https://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+</head>
+<body>
+<!-- 侧边栏小组件定义：sidebar.html 按主题设置中的顺序插入这些组件 -->
+<th:block th:fragment="widget-welcome">
+  <div
+    class="widget glass-card widget-welcome"
+    th:with="avatarList = ${theme.config.sidebar?.welcome_avatar_images?.list}"
+  >
+    <!-- 默认头像（未配置轮播图时） -->
+    <img
+      class="welcome-avatar"
+      th:if="${avatarList == null or #lists.isEmpty(avatarList)}"
+      th:src="@{/assets/images/welcome-avatar.webp}"
+      th:alt="${site.title}"
+      loading="lazy"
+    />
+
+    <!-- 头像轮播图（按设置中的顺序逐张淡入淡出） -->
+    <div
+      class="welcome-avatar-carousel"
+      id="ln-welcome-carousel"
+      th:unless="${avatarList == null or #lists.isEmpty(avatarList)}"
+      th:attr="data-interval=${theme.config.sidebar?.welcome_carousel_interval ?: 3}"
+    >
+      <img
+        class="welcome-avatar"
+        th:classappend="${iterStat.first ? ' is-active' : ''}"
+        th:each="avatar, iterStat : ${avatarList}"
+        th:src="@{${avatar.url}}"
+        th:alt="${site.title}"
+        loading="lazy"
+      />
+    </div>
+
+    <h3
+      class="widget-title"
+      th:text="${theme.config.sidebar?.welcome_title ?: '欢迎来到莱洛丝 ♡'}"
+    >
+      欢迎来到莱洛丝 ♡
+    </h3>
+    <p class="welcome-text" th:text="${theme.config.sidebar?.welcome_content}">
+      这里是一个温柔的小角落，写写说说、发发照片，把生活里的小确幸都轻轻收藏起来。
+    </p>
+  </div>
+</th:block>
+
+<th:block th:fragment="widget-quicknav">
+  <div class="widget glass-card">
+    <h3 class="widget-title" th:text="#{sidebar.quicknav}">快速导航</h3>
+    <div class="quick-nav">
+      <a class="quick-nav-item" th:href="@{/}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+          <polyline points="9 22 9 12 15 12 15 22" />
+        </svg>
+        <span th:text="#{nav.home}">首页</span>
+      </a>
+      <a class="quick-nav-item" th:href="@{${site.routes.archivesUri}}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+          <line x1="16" y1="13" x2="8" y2="13" />
+          <line x1="16" y1="17" x2="8" y2="17" />
+        </svg>
+        <span th:text="#{nav.posts}">文章</span>
+      </a>
+      <a class="quick-nav-item" th:href="@{${site.routes.categoriesUri}}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+        </svg>
+        <span th:text="#{sidebar.categories}">分类</span>
+      </a>
+      <a class="quick-nav-item" th:href="@{${site.routes.tagsUri}}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.83z" />
+          <line x1="7" y1="7" x2="7.01" y2="7" />
+        </svg>
+        <span th:text="#{nav.tags}">标签</span>
+      </a>
+      <a class="quick-nav-item" th:if="${pluginFinder.available('PluginMoments')}" th:href="@{/moments}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+        </svg>
+        <span th:text="#{nav.moments}">说说</span>
+      </a>
+    </div>
+  </div>
+</th:block>
+
+<th:block th:fragment="widget-hottags">
+  <div class="widget glass-card" th:with="allTags = ${tagFinder.listAll()}">
+    <h3 class="widget-title" th:text="#{sidebar.hottags}">推荐标签</h3>
+    <div
+      class="tag-cloud"
+      id="ln-hot-tags"
+      th:if="${not #lists.isEmpty(allTags)}"
+      th:attr="data-limit=${theme.config.sidebar?.hot_tags_count ?: 12}"
+    >
+      <a
+        class="tag-pill"
+        th:each="tag : ${allTags}"
+        th:href="@{${tag.status.permalink}}"
+        th:text="${tag.spec.displayName}"
+        th:attr="data-count=${tag.postCount}"
+        >标签</a
+      >
+    </div>
+    <p class="widget-empty" th:unless="${not #lists.isEmpty(allTags)}" th:text="#{empty.tags}">
+      还没有标签哦～
+    </p>
+  </div>
+</th:block>
+
+<th:block th:fragment="widget-stats">
+  <div class="widget glass-card" th:with="stats = ${siteStatsFinder.getStats()}">
+    <h3 class="widget-title" th:text="#{sidebar.stats}">站点统计</h3>
+    <div class="stats-grid">
+      <div class="stat-item">
+        <span class="stat-num" th:text="${stats.post}">0</span>
+        <span class="stat-label" th:text="#{sidebar.stats.post}">文章数</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num" th:text="${stats.visit}">0</span>
+        <span class="stat-label" th:text="#{sidebar.stats.visit}">访问量</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num" th:text="${stats.comment}">0</span>
+        <span class="stat-label" th:text="#{sidebar.stats.comment}">评论数</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num" th:text="${stats.upvote}">0</span>
+        <span class="stat-label" th:text="#{sidebar.stats.upvote}">点赞数</span>
+      </div>
+      <div class="stat-item stat-item-wide">
+        <span class="stat-num" th:text="${stats.category}">0</span>
+        <span class="stat-label" th:text="#{sidebar.stats.category}">分类数</span>
+      </div>
+    </div>
+  </div>
+</th:block>
+
+<th:block th:fragment="widget-holiday">
+  <div class="widget glass-card">
+    <h3 class="widget-title" th:text="#{sidebar.holiday}">假期倒计时</h3>
+    <div th:replace="~{modules/holiday :: holiday}"></div>
+  </div>
+</th:block>
+
+<!-- 自定义 HTML 小组件（按侧边栏设置中添加的条目渲染） -->
+<th:block th:fragment="widget-custom(item)">
+  <div
+    class="widget glass-card widget-custom"
+    th:if="${not #strings.isEmpty(item.content)}"
+  >
+    <h3
+      class="widget-title"
+      th:if="${not #strings.isEmpty(item.title)}"
+      th:text="${item.title}"
+      >自定义</h3
+    >
+    <div class="widget-custom-body" th:utext="${item.content}"></div>
+  </div>
+</th:block>
+
+<!-- 页脚小组件（内容在「主题设置 → 页脚」中维护） -->
+<th:block th:fragment="widget-footer">
+  <div class="widget glass-card widget-footer">
+    <th:block th:replace="~{modules/footer :: footer}"></th:block>
+  </div>
+</th:block>
+
+<!-- 文章目录导航（文章页右栏专用） -->
+<th:block th:fragment="widget-toc">
+  <section
+    class="widget glass-card toc-widget"
+    id="ln-toc-widget"
+    aria-label="文章导航"
+  >
+    <h3 class="widget-title" th:text="#{post.toc}">文章导航</h3>
+    <nav id="ln-toc-nav" class="ln-toc-nav" aria-label="目录"></nav>
+    <p id="ln-toc-empty" class="ln-toc-empty" th:text="#{post.tocEmpty}" hidden>
+      本文暂无小标题～
+    </p>
+  </section>
+</th:block>
+</body>
+</html>

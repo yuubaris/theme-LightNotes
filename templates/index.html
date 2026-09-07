@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="https://www.thymeleaf.org"
+  th:replace="~{layout :: html(head = ~{::head}, content = ~{::content})}"
+>
+  <th:block th:fragment="head">
+    <title th:text="${site.title}">站点标题</title>
+  </th:block>
+
+  <th:block th:fragment="content">
+    <div class="home-layout">
+      <div class="main-col">
+        <!-- 说说 / 文章 Tab 切换 -->
+        <div
+          class="tab-bar glass-card"
+          id="ln-tabs"
+          th:if="${pluginFinder.available('PluginMoments')}"
+          th:attr="data-default=${theme.config.home?.default_tab ?: 'moments'}"
+        >
+          <button type="button" class="tab-btn" data-tab="moments" th:classappend="${!posts.hasPrevious()} ? 'active'" th:text="#{tab.moments}">
+            说说
+          </button>
+          <button type="button" class="tab-btn" data-tab="posts" th:classappend="${posts.hasPrevious()} ? 'active'" th:text="#{tab.posts}">
+            文章
+          </button>
+        </div>
+
+        <!-- 说说面板 -->
+        <section
+          class="tab-panel"
+          th:classappend="${!posts.hasPrevious()} ? 'active'"
+          data-panel="moments"
+          th:if="${pluginFinder.available('PluginMoments')}"
+          th:with="homeMoments = ${momentFinder.list({page: 1, size: theme.config.home?.moments_size ?: 10, sort: {'spec.releaseTime,desc'}})}"
+        >
+          <div class="card-list" th:if="${not #lists.isEmpty(homeMoments.items)}">
+            <th:block th:each="moment : ${homeMoments.items}">
+              <article th:replace="~{modules/moment-card :: card(moment=${moment})}"></article>
+            </th:block>
+          </div>
+          <div class="empty-state glass-card" th:unless="${not #lists.isEmpty(homeMoments.items)}">
+            <p th:text="#{empty.moments}">还没有说说哦～</p>
+          </div>
+          <div class="view-all glass-card" th:if="${not #lists.isEmpty(homeMoments.items)}">
+            <a th:href="@{/moments}" th:text="#{moments.viewAll}">查看全部说说</a>
+          </div>
+        </section>
+
+        <!-- 文章面板 -->
+        <section class="tab-panel" th:classappend="${posts.hasPrevious()} ? 'active'" data-panel="posts">
+          <div class="card-list" th:if="${not #lists.isEmpty(posts.items)}">
+            <th:block th:each="post : ${posts.items}">
+              <article th:replace="~{modules/post-card :: card(post=${post})}"></article>
+            </th:block>
+          </div>
+          <div class="empty-state glass-card" th:unless="${not #lists.isEmpty(posts.items)}">
+            <p th:text="#{empty.posts}">还没有文章哦～</p>
+          </div>
+          <nav th:replace="~{modules/pagination :: pagination(pageResult=${posts})}"></nav>
+        </section>
+      </div>
+
+      <div th:replace="~{modules/sidebar :: sidebar}"></div>
+    </div>
+  </th:block>
+</html>

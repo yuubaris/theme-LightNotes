@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="https://www.thymeleaf.org"
+  th:replace="~{layout :: html(head = ~{::head}, content = ~{::content})}"
+>
+  <th:block th:fragment="head">
+    <title th:text="|#{page.categories} - ${site.title}|">分类 - 站点标题</title>
+  </th:block>
+
+  <th:block th:fragment="content">
+    <div class="home-layout">
+      <div class="main-col">
+        <div class="page-title-bar glass-card">
+          <h1 class="page-title" th:text="#{page.categories}">分类</h1>
+        </div>
+
+        <div class="category-list" th:if="${not #lists.isEmpty(categories)}">
+          <a
+            class="category-card glass-card"
+            th:each="category : ${categories}"
+            th:href="@{${category.status.permalink}}"
+          >
+            <img
+              class="category-cover"
+              th:if="${not #strings.isEmpty(category.spec.cover)}"
+              th:src="${category.spec.cover}"
+              th:alt="${category.spec.displayName}"
+              loading="lazy"
+            />
+            <div class="category-card-body">
+              <h2 class="category-name" th:text="${category.spec.displayName}">分类名</h2>
+              <p
+                class="category-desc"
+                th:if="${not #strings.isEmpty(category.spec.description)}"
+                th:text="${category.spec.description}"
+              >
+                分类描述
+              </p>
+              <span class="category-count">
+                <span th:text="${category.postCount}">0</span>
+                <span th:text="#{sidebar.stats.post}">篇文章</span>
+              </span>
+            </div>
+          </a>
+        </div>
+        <div class="empty-state glass-card" th:unless="${not #lists.isEmpty(categories)}">
+          <p th:text="#{empty.categories}">还没有分类哦～</p>
+        </div>
+      </div>
+
+      <div th:replace="~{modules/sidebar :: sidebar}"></div>
+    </div>
+  </th:block>
+</html>

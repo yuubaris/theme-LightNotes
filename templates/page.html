@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="https://www.thymeleaf.org"
+  th:replace="~{layout :: html(head = ~{::head}, content = ~{::content})}"
+>
+  <th:block th:fragment="head">
+    <title th:text="|${singlePage.spec.title} - ${site.title}|">页面标题 - 站点标题</title>
+    <th:block th:if="${theme.config.seo?.enable_metadata}">
+      <link rel="canonical" th:href="@{${site.url + singlePage.status.permalink}}" />
+      <meta property="og:type" content="website" />
+      <meta property="og:title" th:content="${singlePage.spec.title}" />
+      <meta property="og:url" th:content="${site.url + singlePage.status.permalink}" />
+      <meta property="og:description" th:content="${singlePage.status.excerpt}" />
+    </th:block>
+  </th:block>
+
+  <th:block th:fragment="content">
+    <div class="detail-layout">
+      <article class="post-detail glass-card" th:object="${singlePage}">
+        <header class="post-header">
+          <h1 class="post-title" th:text="*{spec.title}">页面标题</h1>
+          <div class="post-meta">
+            <span class="author-name" th:text="*{owner?.displayName ?: spec.owner}">作者</span>
+            <span class="dot">·</span>
+            <time th:datetime="*{spec.publishTime}" th:text="*{#temporals.format(spec.publishTime, 'yyyy-MM-dd')}"
+              >2026-01-01</time
+            >
+          </div>
+        </header>
+        <div class="post-content" th:utext="*{content.content}">页面正文</div>
+      </article>
+
+      <div
+        class="comment-section glass-card"
+        th:if="${haloCommentEnabled and singlePage.spec.allowComment}"
+      >
+        <halo:comment
+          group="content.halo.run"
+          kind="SinglePage"
+          th:attr="name=${singlePage.metadata.name}"
+        />
+      </div>
+    </div>
+  </th:block>
+</html>

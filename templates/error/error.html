@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="https://www.thymeleaf.org"
+  th:replace="~{layout :: html(head = ~{::head}, content = ~{::content})}"
+>
+  <th:block th:fragment="head">
+    <title th:text="|#{error.title} - ${site.title}|">页面走丢了 - 站点标题</title>
+  </th:block>
+
+  <th:block th:fragment="content">
+    <div class="error-layout">
+      <div class="error-card glass-card">
+        <svg class="error-art" viewBox="0 0 200 140" fill="none" aria-hidden="true">
+          <ellipse cx="100" cy="118" rx="60" ry="10" fill="rgba(122, 180, 227, 0.25)" />
+          <circle cx="100" cy="62" r="34" fill="rgba(255, 255, 255, 0.7)" stroke="rgba(122, 180, 227, 0.8)" stroke-width="3" />
+          <path d="M88 56c2-4 8-4 10 0" stroke="#5a86ad" stroke-width="3" stroke-linecap="round" />
+          <path d="M112 56c2-4 8-4 10 0" stroke="#5a86ad" stroke-width="3" stroke-linecap="round" />
+          <path d="M92 76c4 4 12 4 16 0" stroke="#5a86ad" stroke-width="3" stroke-linecap="round" />
+          <path d="M72 46c2-8-6-10-4-18" stroke="rgba(201, 182, 228, 0.9)" stroke-width="3" stroke-linecap="round" />
+          <path d="M128 46c-2-8 6-10 4-18" stroke="rgba(246, 198, 215, 0.9)" stroke-width="3" stroke-linecap="round" />
+        </svg>
+        <h1 class="error-status" th:text="${error.status ?: 404}">404</h1>
+        <p class="error-message" th:text="${#strings.defaultString(error.title, #messages.msgOrNull('error.title'))}">
+          页面走丢了
+        </p>
+        <p class="error-detail" th:if="${not #strings.isEmpty(error.detail)}" th:text="${error.detail}">
+          异常详情
+        </p>
+        <a class="btn btn-primary" th:href="@{/}" th:text="#{error.back}">回到首页</a>
+      </div>
+    </div>
+  </th:block>
+</html>

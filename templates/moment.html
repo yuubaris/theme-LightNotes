@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="https://www.thymeleaf.org"
+  th:replace="~{layout :: html(head = ~{::head}, content = ~{::content})}"
+>
+  <th:block th:fragment="head">
+    <title th:text="|#{moments.title} - ${site.title}|">说说 - 站点标题</title>
+  </th:block>
+
+  <th:block th:fragment="content">
+    <div class="detail-layout">
+      <article th:replace="~{modules/moment-card :: card(moment=${moment})}"></article>
+
+      <div class="comment-section glass-card" th:if="${haloCommentEnabled}">
+        <halo:comment
+          group="moment.halo.run"
+          kind="Moment"
+          th:attr="name=${moment.metadata.name}"
+        />
+      </div>
+
+      <div class="back-to-list glass-card">
+        <a th:href="@{/moments}" th:text="#{moments.viewAll}">查看全部说说</a>
+      </div>
+    </div>
+  </th:block>
+</html>
